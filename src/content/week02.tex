@@ -1,0 +1,52 @@
+%! Author = joels
+%! Date = 14/06/2021
+
+\section{Thread synchronisation}
+\textbf{Threads teilen sich Adressraum und Heap.}
+\subsection{Race Condition}
+Wenn mehrere Threads das Selbe Objekt lesen und anhand vom Resultat dieses überschreiben. (z.B. deposit: zuerst lesen dann += amount $\rightarrow$ Zwischen lesen und schreiben könnte ein anderer Thread die balance geändert haben)\\
+\textbf{Lösung:} Gegenseitiger Ausschluss (Mutual Exclusion)\\
+$\rightarrow$ Geht nicht mit einfachem locked Boolean (Keine atomaren Instruktionen)
+\subsection{Synchronized (Monitor Lock)}
+Das Keyword \textcolor{b}{synchronized} belegt einen Lock für das Objekt.\\
+$\rightarrow$ Nur ein Thread kann eine synchronized Methode in derselben Instanz zur gleichen Zeit ausführen.
+\begin{lstlisting}
+// deposit und withdraw sind im gegenseitigem Ausschluss
+class BankAccount {
+    private int balance = 0;
+    public synchronized void deposit (int amount) {
+        this.balance += amount }
+    public synchronized boolean withdraw (int amount) {
+        if (amount <= this.balance) {
+            this.balance -= amount;
+            return true; } {else {return false; } } }
+// synchronized(object){ statements } ist eine explizite Angabe, auf welcher Instanz gelockt wird:
+public void deposit(int amount) {
+    synchronized(this) {this.balance += amount;} }
+\end{lstlisting}
+\textbf{Problem:} Wenn man auf Bedingung warten will. $\rightarrow$ \textcolor{b}{sleep()} und \textcolor{b}{yield()} geben den Monitor-Lock nicht frei.\\
+\textbf{Lösung:} Wait \& Signal Mechanismus. $\rightarrow$ Threads können im Monitor auf Bedingung warten oder können Wartende Threads aufwecken (Änderung signalisieren)\\
+\textcolor{b}{wait()} gibt lock frei und wartet auf Signal. \textcolor{b}{notify()} signalisiert nur einen beliebigen (zufälligen), wartenden Thread. $\rightarrow$ Wartet vlt auf andere Bedingung und kann zu ewigem Warten führen\\
+\textcolor{b}{notifyAll()} signalisiert alle wartenden Threads.\\
+\textbf{Wichtig:}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Signalisierender Thread behält Monitor
+    \item Thread ist im inneren Warteraum, bis Signal kommt
+    \item Bei notify() kommt Thread wieder in äusseren Warteraum
+\end{itemize}
+\begin{lstlisting}
+class BoundedBuffer <T> {
+  private Queue<T> queue = new LinkedList<>();
+  private int limit = 1; // or initialize in constructor
+  public synchronized void put(T item) throws InterruptedException {
+    while (queue.size () == limit) {
+      wait(); // await non full
+    } queue.add(item); notifyAll(); // signal non empty
+  }
+  public synchronized T get() throws InterruptedException {
+    while (queue.size () == 0) {
+      wait();// await non empty
+    } var item = queue.remove(); notifyAll(); // non full
+    return item; } }
+\end{lstlisting}
