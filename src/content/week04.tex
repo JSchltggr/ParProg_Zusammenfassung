@@ -1,4 +1,43 @@
 %! Author = joels
 %! Date = 14/06/2021
 
-\section{Week04}
+\section{Gefahren der Nebenläufigkeit}
+\subsection{Race Condition}
+\textcolor{b}{\textbf{Problem:}} Ungenügend synchronisierte Zugriffe auf gemeinsame Ressourcen. $\rightarrow$ Falsche Resultate oder falsches Verhalten möglich. (meistens wegen Data-Race)\\
+\textbf{Ohne Data Race weil:} Critical Sections nicht geschützt.
+\textbf{Kombinationen:}\\
+\textcolor{b}{Data Race + Race Condition:} Fehlerhaftes Programmverhalten\\
+\textcolor{b}{Data Race ohne Race Condition:} Korrektes Programmverhalten, aber formal falsch\\
+\textcolor{b}{Race Condition ohne Data Race:} Fehlerhaftes Prog.verhalten\\
+\textcolor{b}{Weder noch:} Richtig\\
+\textcolor{b}{\textbf{Wann kann man auf Synchronisation verzichten?}}\\
+\textbf{Immutability} (Unveränderlichkeit): Instanzvariablen sind alle \textcolor{b}{final}, Methoden mit nur Lesezugriff $\rightarrow$ Konstruktor initialisiert die Instanzvariablen.\\
+\textbf{Confinement} (Einsperrung): Objekt gehört nur einem Thread zu einer Zeit. Oder Objekt ist in anderem bereits synchronisiertem Objekt eingekapselt
+\subsection{Deadlocks}
+\textcolor{b}{\textbf{Problem:}} Gegenseitiges Aussperren von Threads.
+\begin{lstlisting}
+class BankAccount {
+  private int balance;
+  public synchronized void transfer(Acc to, int amount) {
+    balance -= amount;
+    to.deposit(amount); } // implizit geschachtelter Lock
+  public synchronized void deposit (int amount) {
+    balance += amount; } }
+// Thread 1                 Thread 2
+a.transfer(b, 20);          b.transfer(a, 50);
+\end{lstlisting}
+\textcolor{b}{\textbf{Deadlock Vermeidung:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Lineare Sperrordnung der Ressourcen einführen $\rightarrow$ Nur geschachtelt in aufsteigender reihenfolge sperren
+    \item Grobgranulare Locks wählen $\rightarrow$ Wenn lineare nicht möglich
+\end{itemize}
+\subsection{Starvation}
+\textcolor{b}{\textbf{Problem:}} Kontinuierliche Fortschrittsbehinderung von Threads wegen Fairness-Problem. $\rightarrow$ Ist ein Liveness/Fairness Problem\\
+\textcolor{b}{\textbf{Starvation Vermeidung:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Länger wartende Threads haben Vortritt
+    \item Fairness einschalten mit \textcolor{b}{Semaphore, Lock \& Condition, rtead-Write Lock}
+    \item Java Monitor hat ein Fairness-Problem
+\end{itemize}

@@ -37,8 +37,7 @@ class BoundedBuffer<T> {
     monitor.lock();
     try {
       while (queue.size() == Capacity) {nonFull.await();}
-      queue.add(item);
-      nonEmpty.signal();
+      queue.add(item); nonEmpty.signal();
     } finally { monitor.unlock(); } }
 \end{lstlisting}
 \subsection{Read-Write Lock}
