@@ -2,3 +2,87 @@
 %! Date = 14/06/2021
 
 \section{Thread Pools}
+\subsection{Konzept und Funktionsweise}
+\textcolor{b}{\textbf{Tasks:}} Implementieren potentiell paralelle Arbeitspakete. Auszuführende Tasks werden in Warteschlange eingereiht.\\
+\textcolor{b}{\textbf{Thread Pool:}} Beschränke Anzahl von Worker-Threads. Holen Tasks aus der Queue und führen sie aus.
+\subsection{Vorteile und Einschränkungen}
+\textcolor{b}{\textbf{Vorteile:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Beschränkte Threadanzahl (Zu viele verlangsamen System)
+    \item Recycling der Threads (Thread-Erzeugung und Freigabe)
+    \item Höhere Abstraktion (Trenne TaskBeschreibung/Ausführung)
+    \item Anzahl Threads pro System konfigurierbar
+\end{itemize}
+\textcolor{b}{\textbf{Einschränkungen:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Tasks dürfen nicht aufeinander warten (Deadlock)
+    \item Task muss zu Ende laufen, bevor Worker Thread anderen Task ausführen kann (Ausnahme: Geschachtelte Tasks)
+\end{itemize}
+\subsection{Fork \& Join Pool}
+\textcolor{b}{\textbf{Future Konzept:}} Repräsentiert ein zukünftiges Resultat. Proxy wartet auf Resultat, muss das Ende der Berechnung abwarten.
+\begin{lstlisting}
+// Future Verwendung
+var threadPool = new ForkJoinPool();
+Future<Integer> future = threadPool.submit(() -> {
+    return value; }); // Tasks können Rückgabe haben
+int result = future.get() // Blockiert, bis Task beendet
+// Einfaches Beispiel:
+var left = threadPool.submit(() -> count(leftPart));
+var right = threadPool.submit(() -> count(rightPart));
+result = left.get() + right.get();
+\end{lstlisting}
+\subsubsection{Rekursive Tasks}
+Tasks können Untertasks starten und abwarten. Erben von RecursiveTask$<$T$>$
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item T compute(): Task Implementierung
+    \item fork(): Starte als Sub-Task in einem anderen Task
+    \item T join(): Warte auf Task-Ende und frage Resultat ab
+    \item T invoke(): Ein Sub-Task starten und abwarten
+    \item invokeAll(): Mehrere Sub-Tasks starten und abwarten
+\end{itemize}
+\begin{lstlisting}
+// Eventuell THRESHOLD einbauen und zwischen parallel und sequentiell unterscheiden
+class CountTask extends RecursiveTask<Integer> {
+  private final int lower, upper;
+  public CountTask(int lower, int upper) {
+    this.lower = lower; this.upper = upper; }
+  protected Integer compute() {
+    if (lower == upper) { return 0; }
+    if (lower+1 == upper) {return isPrime(lower)? 1 : 0;}
+    int middle = (lower + upper) / 2;
+    var left = new CountTask (lower, middle);
+    var right = new CountTask (middle, upper);
+    left.for(); right.fork();
+    return right.join () + left.join(); } }
+\end{lstlisting}
+\subsection{Asynchrone Programmierung}
+\textcolor{b}{\textbf{Ziel:}} Aufrufer soll während der Operation weiterarbeiten. $\rightarrow$ Operation in Thread oder Thread Pool auslagern
+\begin{lstlisting}
+// Klassisch:
+Future<int> future = threadPool.submit(() -> doSmth());
+// other work
+process(future.get()); // Resultat über future
+// Modern: Starte asynchrone Aufgabe in Standard Pool
+- ForkJoinPool.commonPool();
+CompletableFuture<int> future = CompletableFuture
+.supplyAsync(()->doSmth());//runAsync falls kein return
+//other work
+process(future.get());
+\end{lstlisting}
+\subsubsection{Continuation}
+\textcolor{b}{\textbf{Ziel:}} Folgeaufgabe an asynchrone Aufgabe anhängen. Ausführung der Continuation durch beliebigen Thread.
+\begin{lstlisting}
+// Continuation:
+future.thenAccept(result -> syso(result));
+// Tasks verketten:
+future.thenApplyAsync(second).thenAcceptAsync(third);
+// Multi-Continuation:
+CompletableFuture.allOf(future1, future2)
+.thenAcceptAsync(continuation); //Warten aufeinander
+CompletableFuture.any(future1, future2)
+.thenAcceptAsync(continuation)//Sobald einer fertig ist
+// runAsync() ist Fire and Forget. Workers sind Deamons und ignoriert Exceptions
+\end{lstlisting}
