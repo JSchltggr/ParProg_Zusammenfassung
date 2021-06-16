@@ -1,4 +1,64 @@
 %! Author = joels
 %! Date = 14/06/2021
 
-\section{Week03}
+\section{Spezifische Synchronisationsprimitiven}
+\subsection{Semaphor}
+\textbf{Ziel:} Vergabe einer beschränkten Anzahl freier Ressourcen. Semaphor ist also ein Objekt mit Zähler.\\
+\textcolor{b}{\textbf{acquire():}} Bezieht freie Ressource. Wartet, falls keine verfügbar (Zähler <= 0). Dekrementiert Zähler wenn erfolgreich.\\
+\textcolor{b}{\textbf{release():}} Ressource freigeben. Zähler inkrementieren.\\
+\textbf{Verwendung:} \textcolor{b}{new Semaphore(N);} oder \textcolor{b}{new Semaphore(N, true);} $\rightarrow$ true für Fairness (FIFO-Prinzip), aber langsamer
+\begin{lstlisting}
+// Mutex Semaphore als alternative zu synchronized
+class BoundedBuffer <T> {
+  private Queue<T> queue = new LinkedList<>();
+  private Semaphore upperLimit=new Semaphore(cap, true);
+  private Semaphore lowerLimit = new Semaphore(0, true);
+  // private Semaphore mutex = new Semaphore(1, true);
+  public void put(T item) throws InterruptedException {
+    upperLimit.acquire();
+    synchronized (queue) {queue.add (item);}
+    // mutex.acquire(); queue.add(item); mutex.release();
+    lowerLimit.release(); }
+  public T get() throws InterruptedException {
+    T item; lowerLimit.acquire();
+    synchronized (queue) { item = queue.remove(); }
+    // mutex.acquire(); T item = queue.remove(); mutex.release();
+    upperLimit.release(); return item; } }
+\end{lstlisting}
+\subsection{Lock \& Condition}
+\textcolor{b}{\textbf{Ziel:}} Monitor mit mehreren Wartelisten für verschiedene Bedingungen. Braucht kein \textcolor{b}{synchronized, wait, notify, notifyAll}
+\begin{lstlisting}
+class BoundedBuffer<T> {
+  private Queue<T> queue = new LinkedList<>();
+  private Lock monitor = new ReentrantLock(true); //fair
+  private Condition nonFull = monitor.newCondition();
+  private Condition nonEmpty = monitor.newCondition();
+  public void put(T item) throws InterruptedException {
+    monitor.lock();
+    try {
+      while (queue.size() == Capacity) {nonFull.await();}
+      queue.add(item);
+      nonEmpty.signal();
+    } finally { monitor.unlock(); } }
+\end{lstlisting}
+\subsection{Read-Write Lock}
+\textcolor{b}{\textbf{Ziel:}} Gegenseitiger Ausschluss ist unnötig streng für rein
+lesende Abschnitte. $\rightarrow$ Erlaube parallele Lese-Zugriffe, Gegenseitiger Auschluss bei Schreiben.
+\begin{lstlisting}
+var rwLock = new ReentrantReadWriteLock(true);
+rwLock.readLock().lock(); // read-only accesses
+rwLock.readLock().unlock();
+rwLock.writeLock().lock(); // read and write accesses
+rwLock.writeLock().unlock();
+\end{lstlisting}
+\subsection{Count Down Latch}
+\textcolor{b}{\textbf{Ziel:}} Synchronisationsprimitive mit Count Down Zähler. Threads können warten, bis Zähler <= 0 ist. \textcolor{b}{countDown()}, um Zähler zu dekrementieren aber \textcolor{red}{kein countUp()}.
+\subsection{Cyclic Barrier}
+\textcolor{b}{\textbf{Ziel:}} Treffpunkt für fixe Anzahl Threads. Ist wiederverwendbar.
+\begin{lstlisting}
+// CountDown Latch
+var ready = new CountDownLatch(N); //Warte auf N Threads
+var start = new CountDownLatch(1); // Einer gibt Signal
+// Cyclic Barrier
+var start = new CyclicBarrier(N); // Kein start nötig
+\end{lstlisting}

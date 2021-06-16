@@ -42,8 +42,7 @@ class BoundedBuffer <T> {
   public synchronized void put(T item) throws InterruptedException {
     while (queue.size () == limit) {
       wait(); // await non full
-    } queue.add(item); notifyAll(); // signal non empty
-  }
+    } queue.add(item); notifyAll(); } // signal non empty
   public synchronized T get() throws InterruptedException {
     while (queue.size () == 0) {
       wait();// await non empty
