@@ -2,4 +2,57 @@
 %! Date = 14/06/2021
 
 \section{Task Parallel Library}
-test
+\subsection{Threading in .NET}
+Keine Vererbung: Delegate bei Konstruktor. Exception in Thread führt zu Abbruch des Programms.\\
+\textcolor{b}{\textbf{.NET Monitor:}} FIFO Warteschlange, \textcolor{b}{wait()} in schlaufe, \textcolor{b}{PulseAll()} für aufwecken, Synchronisation mit Hilfsobjekt ist Best Practice, Kein Fairness-Flag, Kein Lock \& Condition.\\
+\textcolor{b}{\textbf{Zusätzlich:}} ReadWriteLockSlim für Upgradeable Read/Write, Semaphoren auch auf OS-Stufe nutzbar, Mutex (Binärer Semaphore auf OS-Stufe)
+\begin{lstlisting}
+var myThread = new Thread(() => {
+  for (int i = 0; i < 100; i ++) {
+    Console.WriteLine("MyThread step {0}", i); } });
+myThread.Start(); myThread.Join();
+// Monitor in .NET
+class BankAccount {
+  private decimal balance;
+  private object syncObject = new() //Monitor Hilfsobjekt
+  public void Withdraw(decimal amount) {
+    lock (syncObject) { // Analog zu synchronized
+      while (amount > balance) {
+        Monitor.Wait(syncObject); }
+      balance -= amount; } }
+  public void Deposit(decimal amount) {
+    lock (syncObject) {
+      balance += amount;
+      Monitor.PulseAll(syncObject)}}} // wie notifyAll
+\end{lstlisting}
+\subsection{Task Parallelität}
+\textcolor{b}{\textbf{Work Stealing Thread Pool}} mit Abstraktionsstufen:\\
+Task Parallelität: Explizite Tasks starten und warten\\
+Data Parallelität: Parallele Statements und Queries\\
+Asynchrone Programmierung: Mit Continuation Style
+\begin{lstlisting}
+task task = Task.Run(() => { implementation });
+task.Wait() // Warten auf task
+Task<int> task = Task.Run(() => {return 2;});
+Console.Write(task.Result) // Wartet auf Task Ende
+\end{lstlisting}
+\subsection{Datenparallelität}
+\begin{lstlisting}
+// Parallele Statements wartet bis alle fertig sind
+Parallel.Invoke(
+  () => MergeSort(l,m), () => MergeSort(m,r));
+// Parallele Loop
+Parallel.ForEach(list, file => Convert(file));
+// Falls Iteration unabhängig:
+Parallel.For(0, array.Length, i => doSmth(array[i]));
+\end{lstlisting}
+\subsection{Asynchrone Programmierung}
+\begin{lstlisting}
+var task = Task.Run(LongOperation); // ist asynchron
+int result = task.Result;
+// Task Continuations (Wie CompletableFutures
+task1.ContinueWith(task2).ContinueWith(task3);
+// Multi-Continuation
+Task.WhenAll(task1, task2).ContinueWith(continuation);
+Task.WhenAny(task1, task2).ContinueWith(continuation);
+\end{lstlisting}
