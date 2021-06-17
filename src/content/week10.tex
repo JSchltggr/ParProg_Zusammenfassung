@@ -2,3 +2,46 @@
 %! Date = 14/06/2021
 
 \section{GPU Parallelisierung}
+Cores innerhalb Streaming Multiprocessor sind nur mit Vektor Parallelisierung
+effizient nutzbar. $\rightarrow$ Cores führen dieselbe Instruktion auf unterschiedlichen Daten/Speicherstellen aus\\
+\textcolor{b}{\textbf{NUMA Modell:}} Non-Uniform Memory Access\\
+\textbf{Kein gemeinsamer Hauptspeicher zwischen GPU und CPU} $\rightarrow$ Explizites Übertragen. \textbf{Unterschiedlicher Instruktionssatz/Architektur} $\rightarrow$ Code für GPU kompilieren/designen
+\subsection{CUDA (Computer Unified Device Architecture)}
+\textbf{CUDA Threads:} Gleicher Kernel wird von mehreren Threads ausgeführt. \textbf{SIMT:} Single Instruction Multiple Threads. \textbf{CUDA Blocks:} Threads sind in Blöcke gruppiert. $\rightarrow$ Ein Block: Gleicher SM, Threads können innerhalb von Block interagieren.\\
+\textcolor{b}{\textbf{CUDA Ausführungsmodell:}} \textbf{Thread:} Virtueller Skalarprozessor. \textbf{Block:} Virtueller Multiprozessor. \textbf{Blöcke müssen unabhängig sein}: Run To Completion, Beliebige Ausführungsreihenfolge (sequentiell, parallel), Blocks in Threadpool\\
+\textcolor{b}{\textbf{Datenaufteilung:}} Jede Kernel-Ausführung bestimmt seinen Datenteil. \textcolor{red}{threadIdx.x}: Nummer des Threads innerhalb Block, \textcolor{red}{blockIdx.x}: Nummer des Blocks, \textcolor{red}{blockDim.x}: Blockgrösse
+\begin{lstlisting}
+// CUDA Kernel
+__global__ // Läuft auf GPU (Device)
+void VectorAddKernel (float *A,float *B,float *C,int N){
+  int i = threadIdx.x  * blockDim.x + threadIdx.x; // eindeutiger Index basierend auf Block & Thread ID
+  if (i < N) { C[i] = A[i] + B[i]; } }
+int main() { // Läuft auf CPU (Host)
+  //kernel invocation
+  int blockSize = 1024;
+  int gridSize = (N + blockSize -1) / blockSize;
+  VectorAddKernel<<<gridSize, blockSize>>>(A, B, C, N);}
+\end{lstlisting}
+\textcolor{b}{\textbf{CUDA Ausführung:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Auf GPU allozieren: cudaMalloc
+    \item Daten zu GPU transferieren: cudaMemcpy
+    \item Kernel ausführen: $<<<$gridD, blockD$>>>$
+    \item Daten von GPU zu PU transferieren: cudaMemcpy
+    \item Auf GPU deallozieren: cudaFree
+\end{itemize}
+\begin{lstlisting}
+void CudaVectorAdd(float * A,float * B,float * C,int N){
+  size_t size = N * sizeof(float);
+  float *d_A, *d_B, *d_C;
+  cudaMalloc(&d_A, size); cudaMalloc(&d_B, size); cudaMalloc(&d_C, size);
+  cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice);
+  int blockSize = 1024;
+  int gridSize = (N + blockSize - 1) / blockSize;
+  VectorAddKerne<<<gridSize,blockSize>>>(d_A,d_B,d_C,N);
+  cudaMemcpy(C, d_C, size, cudaMemcpyDeviceToHost);
+  cudaFree(d_A); cudaFree(d_B); cudaFree(d_C);
+//handleCudaError(...) um Malloc, Memcpy und Free
+\end{lstlisting}
