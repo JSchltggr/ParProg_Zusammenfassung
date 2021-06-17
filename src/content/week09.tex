@@ -4,4 +4,19 @@
 \section{Actor Model}
 \textcolor{b}{Aktive Objekte:} Objekte haben nebenläufiges Innenleben\\
 \textcolor{b}{Kommunikation:} Objekte senden und empfangen Nachrichten\\
-\textcolor{b}{Kein Shared Memory:} Nur Austausch von Nachrichten über Kanäle/Mailboxen
+\textcolor{b}{Kein Shared Memory:} Nur Austausch von Nachrichten über Kanäle/Mailboxen\\
+\textcolor{b}{\textbf{Akka Empfangsverhalten:}}\\
+\textbf{Reaktion auf ankommende Nachricht:} Spezielle Behandlungs Methode wird ausgeführt. \textbf{Effekte per Behandlung:} Ändere privaten Zustand, Sende nachrichten, Erzeuge neue Actors. \textbf{Intern sequentiell:} Nur eine Nachricht auf einmal bedienbar (Buffer)
+\begin{lstlisting}
+// Einfacher Akka Actor
+public class NumberPrinter extends UntypedActor {
+  public void onReceive(final Object message) {
+    if (message instanceof Integer) {
+      System.out.println(message); } }
+// Erzeugen und Senden
+ActorSystem system = ActorSystem.create("System");
+ActorRef printer = system.actorOf(Props.create(NumberPrinter.class));
+for (int i = 0; i < 100; i++) {
+  printer.tell(i, ActorRef.noSender()); }
+system.shutdown();
+\end{lstlisting}
