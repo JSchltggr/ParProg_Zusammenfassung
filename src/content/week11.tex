@@ -2,3 +2,28 @@
 %! Date = 14/06/2021
 
 \section{GPU Parallelisierung 2}
+\textcolor{b}{\textbf{Speichermodell:}}\\
+Global Memory ist relativ teuer (ca. 600 Zyklen). Die Threads lesen bei Matrix Multiplikation wiederholt die selben Elemente von A \& B. $\rightarrow$ Effizienzsteigerung mit Cache Speicher\\
+\textcolor{b}{\textbf{Synchronisation:}}\\
+\textcolor{b}{\_\_syncthreads()} synchronisiert alle Threads innerhalb eines Blocks. (Nicht zwischen Blöcken)\\
+\textcolor{b}{\textbf{Warps:}} Ein Block wird intern in Wraps zerlegt (zu je 32 Threads). Alle Threads führen die gleiche Instruktion aus. Verzweigungen (if, switch, while, do, for) werden abwechselnd ausgeführt (Divergenz) $\rightarrow$ Einzele Threads müssen warten
+\begin{lstlisting}
+// multiple of 32
+const int C_ROWS = 1024; const int C_COLS = 2048; const int A_COLS = 3072;
+const int A_ROWS = C_ROWS; const int B_ROWS = A_COLS; const int B_COLS = C_COLS;
+__shared__ float Asub[TILE_SIZE][TILE_SIZE];
+__shared__ float Bsub[TILE_SIZE][TILE_SIZE];
+int tx = threadIdx.x, ty = threadIdx.y;
+int col = blockIdx.x * TILE_SIZE + tx;
+int row = blockIdx.y * TILE_SIZE + ty;
+int nofTiles = (A_COLS + TILE_SIZE - 1) / TILE_SIZE;
+float sum = 0.0;
+for (int tile = 0; tile < nofTiles; tile++) {
+  Asub[ty][tx] = A[row*A_COLS + tile*TILE_SIZE + tx];
+  Bsub[ty][tx] = B[(tile*TILE_SIZE + ty)*B_COLS + col];
+  __syncthreads();
+  for (int ksub = 0; ksub < TILE_SIZE; ksub++) {
+    sum += Asub[ty][ksub] * Bsub[ksub][tx]; }
+  __syncthreads(); }
+C[row * C_COLS + col ] = sum;
+\end{lstlisting}
