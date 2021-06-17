@@ -3,5 +3,41 @@
 
 \section{Memory Models}
 \subsection{Java Memory Model}
-\subsection{Lock-freie Datenstrukturen}
+\textcolor{b}{\textbf{Problem bei Weak Consistency:}} Speicherzugriffe werden in verschiedenen Reihenfolgen von verschiedenen Threads gemacht. (Ausnahme: Synchronisationen/Speicherbarrieren)\\
+\textcolor{b}{\textbf{Problem bei Omptimierungen:}} Betrifft Compiler, Laufzeitsystem und CPUs. Sie ordnen Instruktionen um\\
+$\rightarrow$ Keine sequentielle Konsistenz bei Nebenläufigkeit\\
+\textcolor{b}{\textbf{Atomicity:}} Einzelnes lesen und schreiben ist atomar bei primitiven Datentypen bis 32 Bit $\rightarrow$ Sonst \textcolor{b}{volatile} Keyword.\\
+\textcolor{b}{\textbf{Visibility:}} Sieht Änderungen eines anderen Thread eventuell nicht oder viel später (z.B. wegen Compiler-/JIT-Optimierung)\\
+\textbf{Visibility Garantien:}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Locks Release \& Acquire: Änderungen vor Release werden bei Acquire sichtbar
+    \item Volatile Variable: Änderungen bis zum write werden beim read sichtbar
+    \item Thread/Task-Start und Join: Bei Start Eingabe und bei Join Ausgabe
+    \item Final Variablen: Nach Ende des Konstruktors sichtbar
+\end{itemize}
+\textcolor{b}{\textbf{Ordering Garantien:}}
+\begin{itemize}[topsep=0pt, leftmargin=3mm]
+    \setlength\itemsep{-0.3em}
+    \item Program Order: Sequentielles Verhalten jedes einzelnen Thread bleibt erhalten
+    \item Synchronization Order: Syncbefehle werden zueinander nie umgeordnet (Locking, volatile, Thread start/join)
+    \item Happens-Before Relation: Alles andere kann umgeordnet werden (ausser garantierte Sichtbarkeit unter Threads)
+\end{itemize}
+\textcolor{b}{\textbf{Atomic Klassen:}} Gibt es für \textcolor{b}{Boolean, Integer, Long} und \textcolor{b}{Referenzen} (auch für Array Elemente). Divere atomare Operationen wie \textcolor{b}{addAndGet(), getAndAdd()} etc.
+\begin{lstlisting}
+public class SpinLock {
+  private AtomicBoolean locked=new AtomicBoolean(false);
+  public void acquire() {
+    while (locked.getAndSet(true)) { }
+  public void release() {
+    locked.set(false); } }
+\end{lstlisting}
+\textcolor{b}{\textbf{Lock-freie Datenstrukturen:}}
+ConcurrentLinkedQueue$<$V$>$, ConcurrentLinkedDeque$<$V$>$, ConcurrentSkipListSet$<$V$>$, ConcurrentHashMap$<$K, V$>$, ConcurrentSkipListMap$<$K, V$>$
 \subsection{.NET Memory Model}
+\textcolor{b}{\textbf{Unterschied zu Java Memory Model:}}\\
+\textcolor{b}{Atomacity:} long/double nicht mit volatile atomar. \textcolor{b}{Visibility:} Nicht definiert, implizit durch Ordering. \textcolor{b}{Ordering:} Nur Half und Full Fences $\rightarrow$ Atomare Instruktionen mit \textcolor{b}{Interlocked} Klasse\\
+\textcolor{b}{\textbf{.NET Volatile Half Fences:}}\\
+\textbf{Volatile Write:} Vorangehende Zugriffe bleiben davor \textbf{Volatile Read:} Nachfolgende Zugriffe bleiben danach\\
+\textcolor{b}{\textbf{.NET Volatile Full Fences:}}\\
+Thread.MemoryBarrier(); $\rightarrow$ Verbietet Umordnung in beide Richtungen.
