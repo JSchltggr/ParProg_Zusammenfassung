@@ -1,4 +1,50 @@
 %! Author = joels
 %! Date = 14/06/2021
 
-\section{Week07}
+\section{GUI und Threading}
+\subsection{GUI \& Threading}
+GUI Frameworks erlauben nur \textbf{Single-Threading}: Nur spezifischer UI-Thread darf auf UI-Komponente zugreifen.\\
+\textcolor{b}{\textbf{GUI Implikationen:}} Keine langen Operat. in UI Events, Kein Zugriff durch fremde Threads (blockieren \& Race Condition)\\
+\textcolor{b}{\textbf{UI Interaktion:}} UI Operationen müssen als Events in die UI Event Queue eingereiht werden.\\
+\textcolor{b}{\textbf{Dispatching:}} Benutzung der Klasse \textcolor{b}{SwingUtilities}
+\begin{lstlisting}
+button.addActionListener(event -> {
+  new Thread(() -> {
+    var text = readHugeFile();
+    SwingUtilities.invokeLater(() -> { // asynchron
+      textArea.setText(text); });//synchron:invokeAndWait
+    }).start(); });
+// Sauberer Setup: frame.pack() und setVisible(true) (Auf JFrame bezogen) in SwingUtilities ausführen
+// Background Worker:
+class BackgrCalc extends SwingWorker<Integer, Void> {
+  @Override // Int: Resultat, Void: Zwischenresultat
+  public Integer doInBackground () {
+    return longComputation (); }
+  @Override // UI Thread
+  protected void done() {
+    try { int result = get();
+      label.setText("Result: " + result);
+    } catch (InterruptedException|ExecutionException e) {
+    } } } // get() gibt Resultat von doInBackground
+\end{lstlisting}
+\textcolor{b}{\textbf{.NET UI Thread Modell:}} Gleiches Prinzip wie in Java.
+\begin{lstlisting}
+// UI Thread ist der Aufrufen von Application.Run()
+// UI Event Dispatching:
+control.Dispatcher.InvokeAsync(action); // WPF
+control.BeginInvoke(delegate) // WinForm
+// Sind beide asynchron. Synchron mit Invoke
+\end{lstlisting}
+\subsection{C\# async/await}
+\textcolor{b}{async} für Methode (Aufrufer wird blockiert). \textcolor{b}{await} für Tasks (Warten auf Ende eines TPL Task).\\
+\textcolor{b}{\textbf{Rückgabetypen:}} \textcolor{b}{void}: Fire \& Forget, \textcolor{b}{Task}: Keine Rückgabe, erlaubt Warten, \textcolor{b}{Task<T>} Rückgabetyp T.\\
+\textcolor{b}{\textbf{Ausführungsmodell:}} Aufrufer führt async Methode synchron aus, bis ein blockierendes await anliegt. Erst danach asynchron.
+\begin{lstlisting}
+async Task<string> ConcatWebSitesAsync(string url1, string url2) {
+  HttpClient client = new HttpClient();
+  Task<string> download1 = client.GetStringAsync(url1);
+  Task<string> download2 = client.GetStringAsync(url2);
+  string site1 = await download1;
+  string site2 = await download2;
+  return site1 + site2; }
+\end{lstlisting}
