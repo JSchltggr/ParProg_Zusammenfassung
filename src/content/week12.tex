@@ -2,3 +2,37 @@
 %! Date = 14/06/2021
 
 \section{Cluster Parallelisierung}
+\textcolor{b}{\textbf{Ziel:}} Ein Programm auf mehreren Nodes ausführen. $\rightarrow$ Kein Shared Memory (NUMA) zwischen Nodes. Shared Memory (SMP) für Cores innerhalb von Node\\
+\textcolor{b}{\textbf{MPI:}} Verteiltes Programmeirmodell, Basiert auf Actor/CSP-Prinzip. Jeder Prozess hat seine Identifikation (Rank) und arbeitet unabhängig in seinem Adresraum. Starten und terminieren synchron $\rightarrow$ Können untereinander Kommunizieren (Nachrichten Senden/Empfangen), Synchronisation mit Barrieren
+\begin{lstlisting}
+#include<stdio.h> #include"mpi.h"
+int main(int argc, char* argv[]) {
+  MPI_Init(&argc, &argv); // MPI Initialisierung
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);//Prozess Identif
+  printf("MPI process %i", rank);
+  MPI_Finalize(); // MPI Finalisierung
+  return 0; }
+MPI_Comm_size(MPI_COMM_WORLD, &size); // Anzahl Prozesse
+MPI_Barrier(MPI_COMM_WORLD); // Barriere für alle Proz.
+MPI_AllReduce(&value, &total, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); // Aggregation von Teilresultaten
+// Senden/Empfangen eines Int-Wertes (tag: Frei wählbare Nummer für Nachrichtenart >=0)
+MPI_Send(&value, 1, MPI_INT, receiverRank, tag, MPI_COMM_WORLD);
+MPI_Recv(&value, 1, MPI_INT, senderRank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+// Monte Carlo:
+int rank, size;
+MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+MPI_Comm_size(MPI_COMM_WORLD, &size);
+srand(rank * 4711) // Willkürlicher Seed
+long hits = count_hits(TRIALS / size) // Nur Bruchteil
+long total;
+MPI_Reduce(&hits, &total, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD); // Prozess 0 erhält Gesamtwert
+if (rank==0) {double pi = 4 * ((double)total / TRIALS);}
+// Count_hits:
+long count_hits(long trials) {
+  long hits = 0, i;
+  for (i = 0; i < trials; i++) {
+    double x = (double)rand()/RAND_MAX;
+    double y = (double)rand()/RAND_MAX;
+    if (x * x + y * y <= 1) { hits++; } } return hits; }
+\end{lstlisting}

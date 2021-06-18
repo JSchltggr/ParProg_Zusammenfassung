@@ -24,6 +24,5 @@ for (int tile = 0; tile < nofTiles; tile++) {
   __syncthreads();
   for (int ksub = 0; ksub < TILE_SIZE; ksub++) {
     sum += Asub[ty][ksub] * Bsub[ksub][tx]; }
-  __syncthreads(); }
-C[row * C_COLS + col ] = sum;
+  __syncthreads(); } C[row * C_COLS + col] = sum;
 \end{lstlisting}
