@@ -14,18 +14,7 @@
 \textbf{Immutability} (Unveränderlichkeit): Instanzvariablen sind alle \textcolor{b}{final}, Methoden mit nur Lesezugriff $\rightarrow$ Konstruktor initialisiert die Instanzvariablen.\\
 \textbf{Confinement} (Einsperrung): Objekt gehört nur einem Thread zu einer Zeit. Oder Objekt ist in anderem bereits synchronisiertem Objekt eingekapselt
 \subsection{Deadlocks}
-\textcolor{b}{\textbf{Problem:}} Gegenseitiges Aussperren von Threads.
-\begin{lstlisting}
-class BankAccount {
-  private int balance;
-  public synchronized void transfer(Acc to, int amount) {
-    balance -= amount;
-    to.deposit(amount); } // implizit geschachtelter Lock
-  public synchronized void deposit (int amount) {
-    balance += amount; } }
-// Thread 1                 Thread 2
-a.transfer(b, 20);          b.transfer(a, 50);
-\end{lstlisting}
+\textcolor{b}{\textbf{Problem:}} Gegenseitiges Aussperren von Threads. Zwingend 2 Lock Instanzen\\
 \textcolor{b}{\textbf{Deadlock Vermeidung:}}
 \begin{itemize}[topsep=0pt, leftmargin=3mm]
     \setlength\itemsep{-0.3em}
@@ -38,6 +27,6 @@ a.transfer(b, 20);          b.transfer(a, 50);
 \begin{itemize}[topsep=0pt, leftmargin=3mm]
     \setlength\itemsep{-0.3em}
     \item Länger wartende Threads haben Vortritt
-    \item Fairness einschalten mit \textcolor{b}{Semaphore, Lock \& Condition, rtead-Write Lock}
+    \item Fairness einschalten mit \textcolor{b}{Semaphore, Lock \& Condition, Read-Write Lock}
     \item Java Monitor hat ein Fairness-Problem
 \end{itemize}

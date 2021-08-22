@@ -2,11 +2,6 @@
 %! Date = 14/06/2021
 
 \section{Multi-Threading Grundlagen}
-\includegraphics[width=0.97\linewidth]{stufen_parallelisierung}\\
-\textcolor{b}{\textbf{Parallelität (Parallelism):}} Mehrere Teilabläufe, welche gleichzeitig auf mehreren Prozessoren/Cores laufen. $\rightarrow$ Schnellere Programme\\
-\textcolor{b}{\textbf{Nebenläufigkeit (Concurrency):}} Gleichzeitig oder verzahnt ausführbare Abläufe, welche auf gemeinsame Ressourcen zugreifen (Logisch unabhängig) $\rightarrow$ Einfachere Programme\\
-\textcolor{b}{\textbf{User-Level Threads:}} Im Prozess implementiert (keine echte Parallelität)\\
-\textcolor{b}{\textbf{Kernel-Level Threads:}} Im Kernel implementiert (Multi-Core Ausnutzung) $\rightarrow$ Kontextwechsel vom Prozess per SW-Interrupt
 \subsection{Thread Scheduling}
 \textcolor{b}{\textbf{Processor Sharing:}} Mehr Threads als Prozessoren und bei Wartebidingung Proz. an anderen bereiten Thread abgeben.\\
 \textcolor{b}{\textbf{Verzahnte Ausführung:}} Prozessor führt Instruktionen von mehreren Threads in Teilsequenzen aus. $\rightarrow$ Quasiparallelität\\

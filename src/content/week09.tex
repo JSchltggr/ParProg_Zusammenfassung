@@ -2,6 +2,8 @@
 %! Date = 14/06/2021
 
 \section{Actor Model}
+\textbf{Jeder Actor hat seinen eigenen lokalen/isolierten Speicher}
+\textcolor{b}{\textbf{Akka:} Java ist Shared Memory basiert (Heap). Daher: Aufpassen, dass Actoren keine Referenzen auf gemeinsame Heap-Objekte verwenden. (ActorRef stattdessen)}\\
 \textcolor{b}{Aktive Objekte:} Objekte haben nebenläufiges Innenleben\\
 \textcolor{b}{Kommunikation:} Objekte senden und empfangen Nachrichten\\
 \textcolor{b}{Kein Shared Memory:} Nur Austausch von Nachrichten über Kanäle/Mailboxen\\

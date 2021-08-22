@@ -14,13 +14,16 @@ effizient nutzbar. $\rightarrow$ Cores führen dieselbe Instruktion auf untersch
 // CUDA Kernel
 __global__ // Läuft auf GPU (Device)
 void VectorAddKernel (float *A,float *B,float *C,int N){
-  int i = threadIdx.x  * blockDim.x + threadIdx.x; // eindeutiger Index basierend auf Block & Thread ID
+  int i = blockIdx.x  * blockDim.x + threadIdx.x; // eindeutiger Index basierend auf Block & Thread ID
   if (i < N) { C[i] = A[i] + B[i]; } }
 int main() { // Läuft auf CPU (Host)
   //kernel invocation
   int blockSize = 1024;
   int gridSize = (N + blockSize -1) / blockSize;
   VectorAddKernel<<<gridSize, blockSize>>>(A, B, C, N);}
+// Mehrdimensional:
+dim3 blockSize(32, 32);
+dim3 gridSize((N+31)/32, (M+31)/32);
 \end{lstlisting}
 \textcolor{b}{\textbf{CUDA Ausführung:}}
 \begin{itemize}[topsep=0pt, leftmargin=3mm]

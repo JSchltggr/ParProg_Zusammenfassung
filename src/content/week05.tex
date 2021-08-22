@@ -44,33 +44,61 @@ Tasks können Untertasks starten und abwarten. Erben von RecursiveTask$<$T$>$
     \item invokeAll(): Mehrere Sub-Tasks starten und abwarten
 \end{itemize}
 \begin{lstlisting}
-// Eventuell THRESHOLD einbauen und zwischen parallel und sequentiell unterscheiden
-class CountTask extends RecursiveTask<Integer> {
-  private final int lower, upper;
-  public CountTask(int lower, int upper) {
+class ConvolutionTask extends RecursiveAction {
+  private final int[] input;
+  private final int[] output;
+  private final int lower;
+  private final int upper;
+  private final static int THRESHOLD = 1000;
+  public ConvolutionTask(int[] input, int[] output, int lower, int upper) {
+    this.input = input; this.output = output;
     this.lower = lower; this.upper = upper; }
-  protected Integer compute() {
-    if (lower == upper) { return 0; }
-    if (lower+1 == upper) {return isPrime(lower)? 1 : 0;}
-    int middle = (lower + upper) / 2;
-    var left = new CountTask (lower, middle);
-    var right = new CountTask (middle, upper);
-    left.for(); right.fork();
-    return right.join () + left.join(); } }
+  @Override protected void compute() {
+    if (upper - lower > THRESHOLD) {
+      int middle = (lower + upper) / 2;
+    invokeAll(
+      new ConvolutionTask(input, output, lower,middle),
+      new ConvolutionTask(input, output, middle, upper));
+    } else { for (int i = lower; i < upper; i++) {
+        int left = i > 0 ? input[i - 1] : 0;
+        int right = i < input.length - 1 ? input[i+1] : 0;
+        output[i] = left + input[i] + right; } } } }
 \end{lstlisting}
 \subsection{Asynchrone Programmierung}
 \textcolor{b}{\textbf{Ziel:}} Aufrufer soll während der Operation weiterarbeiten. $\rightarrow$ Operation in Thread oder Thread Pool auslagern
 \begin{lstlisting}
-// Klassisch:
-Future<int> future = threadPool.submit(() -> doSmth());
-// other work
-process(future.get()); // Resultat über future
-// Modern: Starte asynchrone Aufgabe in Standard Pool
-- ForkJoinPool.commonPool();
-CompletableFuture<int> future = CompletableFuture
-.supplyAsync(()->doSmth());//runAsync falls kein return
-//other work
-process(future.get());
+// Reihenfolge der Downloads und GUI erhalten bleiben
+void download(List<URL> links, OutputStream output) {
+  if (links.isEmpty()) { statusLabel.setText("Done"); }
+  var url = links.get(0);
+  statusLabel.setText("Downloading " + url);
+    if (cancelBox.isSelected()) {
+      statusLabel.setText("Cancelled!");
+      return; }
+    CompletableFuture.runAsync(() -> {
+      url.openStream().transferTo(output);
+      var remaining = links.subList(1, links.size());
+      SwingUtilities.invokeLater(() -> download(remaining, output)); }); }
+// Asynchron mit CompletableFuture
+CompletableFuture<File> zipAsync(File[] files) {
+  statusLabel.setText("zip started");
+  return CompletableFuture.supplyAsync(() -> {
+    File[] temp = new File[files.length];
+    for (int i = 0; i < files.length; i++) {
+      temp[i] = compress(files[i]); }
+    SwingUtilities.invokeAndWait(() -> statusLabel.setText("all files compressed"));
+    File output = archive(temp);
+    SwingUtilities.invokeAndWait(() -> statusLabel.setText("zip completed"));
+    return output; }); }
+// Parallel und asynchron
+void scanAsync(List<File> list, String pattern) {
+  List<CompletableFuture<Void>>futures=new ArrList<>();
+  for (File file : list) {
+    futures.add(CompletableFuture.runAsync(() -> {
+      if (search(file, pattern)) {
+        print("Found " + file); } })); } //SwingUtilities mit invokeAndWait falls auf GUI schreiben
+  CompletableFuture.allOf(futures.toArray(new
+CompletableFuture[0])).thenRun(() -> print("Done")); }
 \end{lstlisting}
 \subsubsection{Continuation}
 \textcolor{b}{\textbf{Ziel:}} Folgeaufgabe an asynchrone Aufgabe anhängen. Ausführung der Continuation durch beliebigen Thread.

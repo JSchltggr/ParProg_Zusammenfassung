@@ -14,7 +14,7 @@ myThread.Start(); myThread.Join();
 // Monitor in .NET
 class BankAccount {
   private decimal balance;
-  private object syncObject = new() //Monitor Hilfsobjekt
+  private object syncObject = new() //Monitor Hilfsobj.
   public void Withdraw(decimal amount) {
     lock (syncObject) { // Analog zu synchronized
       while (amount > balance) {
@@ -26,6 +26,7 @@ class BankAccount {
       Monitor.PulseAll(syncObject)}}} // wie notifyAll
 \end{lstlisting}
 \subsection{Task Parallelität}
+\textbf{Vorteil:} Effizienz, durch wenig Contention (eigene Warteschlange) \textbf{Nachteil:} Fairnessproblem bei unausgeglichener Verteilung (und LIFO) bei Subtasks.\\
 \textcolor{b}{\textbf{Work Stealing Thread Pool}} mit Abstraktionsstufen:\\
 Task Parallelität: Explizite Tasks starten und warten\\
 Data Parallelität: Parallele Statements und Queries\\
@@ -43,7 +44,7 @@ Parallel.Invoke(
   () => MergeSort(l,m), () => MergeSort(m,r));
 // Parallele Loop
 Parallel.ForEach(list, file => Convert(file));
-// Falls Iteration unabhängig:
+// Falls Iteration unabhängig: Anzahl Threads: Freie Worker Threads (logische Prozessoren)
 Parallel.For(0, array.Length, i => doSmth(array[i]));
 \end{lstlisting}
 \subsection{Asynchrone Programmierung}
