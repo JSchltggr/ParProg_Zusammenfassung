@@ -6,9 +6,3 @@
 \textcolor{b}{\textbf{Global Interpreter Lock (GIL):}} Nur ein Thread kann Python Byte-Code ausführen. Kein Speedup für CPU-Bound Operationen möglich. Data Races sind dennoch möglich (Reordering möglich, Visibility nicht garantiert) $\rightarrow$ Kein Memory Model\\
 \textcolor{b}{\textbf{Shared Memory bei Prozessen:}} Muss explizit definiert werden, Erfordert Angabe eines Type-Codes oder ctypes, Als Argument an die Startfunktion des Prozesses, Können Teil einer Klasse sein.\\
 \textcolor{b}{\textbf{asyncio (async/await):}} Keine parallele Ausführung. $\rightarrow$ async Methoden werden erst beim zugehörigem await ausgeführt
-\subsection{JavaScript Concurrency}
-\textcolor{b}{\textbf{Promise:}} Analog zu Java Completable Future. Können mit async/await verwendet werden (oder mit .then(\ldots)).
-\begin{lstlisting}
-function delay(ms){return new Promise((resolv,rejec)=>{
-  setTimeout(() => resolve() ms); }); }
-\end{lstlisting}

@@ -29,11 +29,8 @@ public class SpinLock {
   private AtomicBoolean locked=new AtomicBoolean(false);
   public void acquire() {
     while (locked.getAndSet(true)) { }
-  public void release() {
-    locked.set(false); } }
+  public void release() { locked.set(false); } }
 \end{lstlisting}
-\textcolor{b}{\textbf{Lock-freie Datenstrukturen:}}
-ConcurrentLinkedQueue$<$V$>$, ConcurrentLinkedDeque$<$V$>$, ConcurrentSkipListSet$<$V$>$, ConcurrentHashMap$<$K, V$>$, ConcurrentSkipListMap$<$K, V$>$
 \subsection{.NET Memory Model}
 \textcolor{b}{\textbf{Unterschied zu Java Memory Model:}}\\
 \textcolor{b}{Atomacity:} long/double nicht mit volatile atomar. \textcolor{b}{Visibility:} Nicht definiert, implizit durch Ordering. \textcolor{b}{Ordering:} Nur Half und Full Fences $\rightarrow$ Atomare Instruktionen mit \textcolor{b}{Interlocked} Klasse\\

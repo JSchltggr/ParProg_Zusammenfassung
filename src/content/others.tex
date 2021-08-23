@@ -1,0 +1,41 @@
+%! Author = joels
+%! Date = 22/08/2021
+
+\section{Others}
+\begin{lstlisting}
+// Monitor mit Semaphore
+public class Monitor {
+  private final Semaphore monitorLock =new Semaphore(1);
+  private final Semaphore innerWaiting=new Semaphore(0);
+  private final Semaphore innerPulsed =new Semaphore(0);
+  private int waitingThreads = 0;
+  public void lock() throws InterruptedException {
+    monitorLock.acquire(); }
+  public void unlock() { monitorLock.release(); }
+  public void await() throws InterruptedException {
+    waitingThreads++; monitorLock.release();
+    innerWaiting.acquire(); innerPulsed.release();
+    monitorLock.acquire(); }
+  public void signalAll() throws InterruptedException {
+    innerWaiting.release(waitingThreads);
+    innerPulsed.acquire(waitingThreads);
+    waitingThreads = 0; } }
+// Akka
+class ParProgActor extends UntypedActor {
+  private final int number; private ActorRef next;
+  private boolean pendingSend;
+  private int value = 0;
+  public ParProgActor(int number) {
+    this.number = number;
+    this.pendingSend = number == 0; }
+  public void onReceive(Object message) {
+    if (message instanceof ActorRef) {
+      next = (ActorRef)message;
+    } else if (message instanceof Integer) {
+      this.value = (int)message;
+      if (number == 0) {
+        System.out.println("result: " + value);
+      } else { pendingSend = true; } }
+    if (pendingSend) { pendingSend = false;
+      next.tell(value + number, getSelf()); } } }
+\end{lstlisting}

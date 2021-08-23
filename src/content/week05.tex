@@ -44,25 +44,24 @@ Tasks können Untertasks starten und abwarten. Erben von RecursiveTask$<$T$>$
     \item invokeAll(): Mehrere Sub-Tasks starten und abwarten
 \end{itemize}
 \begin{lstlisting}
-class ConvolutionTask extends RecursiveAction {
-  private final int[] input;
-  private final int[] output;
-  private final int lower;
-  private final int upper;
-  private final static int THRESHOLD = 1000;
-  public ConvolutionTask(int[] input, int[] output, int lower, int upper) {
-    this.input = input; this.output = output;
-    this.lower = lower; this.upper = upper; }
+class PairwiseSum extends RecursiveAction {
+  private final int[] array;
+  private final int lower, upper;
+  private static final int THRESHOLD = 1;//configurable
+  public PairwiseSum(int[] array, int lower, int upper){
+    this.array = array;
+    this.lower = lower;
+    this.upper = upper; }
   @Override protected void compute() {
     if (upper - lower > THRESHOLD) {
       int middle = (lower + upper) / 2;
-    invokeAll(
-      new ConvolutionTask(input, output, lower,middle),
-      new ConvolutionTask(input, output, middle, upper));
-    } else { for (int i = lower; i < upper; i++) {
-        int left = i > 0 ? input[i - 1] : 0;
-        int right = i < input.length - 1 ? input[i+1] : 0;
-        output[i] = left + input[i] + right; } } } }
+      invokeAll(
+        new PairwiseSum(array, lower, middle),
+        new PairwiseSum(array, middle, upper) );
+    } else {
+      for (int i = lower; i < upper; i++) {
+        array[2 * i] += array[2 * i + 1];
+        array[2 * i + 1] = 0; } } } }
 \end{lstlisting}
 \subsection{Asynchrone Programmierung}
 \textcolor{b}{\textbf{Ziel:}} Aufrufer soll während der Operation weiterarbeiten. $\rightarrow$ Operation in Thread oder Thread Pool auslagern
